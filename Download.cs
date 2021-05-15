@@ -24,14 +24,16 @@
             return RedirectToAction("Files", "Customer", new { customerID = customerID[0] });
         }
 
-        [HttpPost]
-        public async Task<IActionResult> DeleteFiles(int documentRepositoryID, int customerID)
+        [HttpGet]
+        public async Task<IActionResult> Download(int DocumentRepositoryID, int customerID)
         {
-            var customerDocumentRepository = new CustomerDocumentRepositoryModel();
-            customerDocumentRepository.DocumentRepositoryID = documentRepositoryID;
-            customerDocumentRepository.customerID = customerID;
-            customerDocumentRepository.DeletedByUserID = User.GetUserId();
-            await CustomerFleetManagementService.DeleteFile(customerDocumentRepository);
-
-            return RedirectToAction("GetCustomersById", "Customer", new { customerID = customerID });
+            var documents = await CustomerFleetManagementService.ViewDocumentAsync(DocumentRepositoryID);
+            FileInfo fileExtension = new FileInfo(documents.ImgName);
+            string path = @"C:\Temp2";
+            System.IO.Directory.CreateDirectory(path);
+            FileStream stream = new FileStream(Path.Combine(path, documents.ImgName), FileMode.Create);
+            stream.Write(documents.ImgData, 0, documents.ImgLength);
+            stream.Close();
+            new ProcessStartInfo(@"C:\Temp2\"+documents.ImgName).StartProcess();
+            return RedirectToAction("Files", "Customer", new { customerID = customerID });
         }
